@@ -1,4 +1,4 @@
-DELAY_IN_SECS = 0.5
+DELAY_IN_SECS = 1
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect
 from manager import ConnectionManager
 import time
@@ -36,13 +36,12 @@ async def websocket_endpoint(websocket: WebSocket, client_id: int):
 			for operation in required_operations:
 				data = transform(data, operation)
 			
-			print(f"{data = }")
-			print(f"{required_operations = }")
 			data['revision'] = current_revision + 1
-			print(f"{data = }")
+			print(f"Client {client_id} sent: {data}")
 			insert_operation(cursor, connection, data)
 
-			await manager.broadcast(data)
+			await manager.broadcast(client_id, data)
+			await manager.send_acknowledgement(client_id, data)
 	except WebSocketDisconnect:
 		manager.disconnect([client_id, websocket])
 
